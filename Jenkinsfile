@@ -1,4 +1,3 @@
-cat > Jenkinsfile << 'EOF'
 pipeline {
     agent any
 
@@ -15,15 +14,9 @@ pipeline {
             }
         }
 
-        stage('Build') {
-            steps {
-                sh 'echo "No build step for simple Node.js app"'
-            }
-        }
-
         stage('Test') {
             steps {
-                sh 'npm test || echo "No tests defined"'
+                sh 'npm test'
             }
         }
 
@@ -36,8 +29,7 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: '**/*', allowEmptyArchive: true
+            echo 'Pipeline finished!'
         }
     }
-}
-EOF
+} where should i update it
