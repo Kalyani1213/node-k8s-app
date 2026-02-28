@@ -32,4 +32,4 @@ pipeline {
             echo 'Pipeline finished!'
         }
     }
-} where should i update it
+}
