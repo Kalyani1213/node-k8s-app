@@ -1,9 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker { image 'node:18' }
+    }
 
     environment {
-        IMAGE_NAME = "node-k8s-app"        // Docker image name
-        IMAGE_TAG = "latest"
+        DOCKER_IMAGE = "kalyani1213/my-node-app:latest"  // Replace with your Docker Hub repo
     }
 
     stages {
@@ -27,18 +28,15 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
+                sh "docker build -t $DOCKER_IMAGE ."
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    sh '''
-                        echo $PASSWORD | docker login -u $USERNAME --password-stdin
-                        docker tag $IMAGE_NAME:$IMAGE_TAG $USERNAME/$IMAGE_NAME:$IMAGE_TAG
-                        docker push $USERNAME/$IMAGE_NAME:$IMAGE_TAG
-                    '''
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh "docker push $DOCKER_IMAGE"
                 }
             }
         }
