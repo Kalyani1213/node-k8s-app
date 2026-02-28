@@ -1,10 +1,8 @@
 pipeline {
-    agent {
-        docker { image 'node:18' }
-    }
+    agent any
 
-    environment {
-        DOCKER_IMAGE = "kalyani1213/my-node-app:latest"  // Replace with your Docker Hub repo
+    tools {
+        nodejs "NodeJS18" // Make sure NodeJS18 is configured in Jenkins Global Tools
     }
 
     stages {
@@ -28,16 +26,14 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t $DOCKER_IMAGE ."
+                sh 'docker build -t my-node-app:latest .'
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                    sh "docker push $DOCKER_IMAGE"
-                }
+                sh 'docker tag my-node-app:latest <YOUR_DOCKERHUB_USERNAME>/my-node-app:latest'
+                sh 'docker push <YOUR_DOCKERHUB_USERNAME>/my-node-app:latest'
             }
         }
 
