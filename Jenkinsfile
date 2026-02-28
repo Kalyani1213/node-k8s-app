@@ -18,10 +18,6 @@ pipeline {
         stage('Check Node & NPM') {
             steps {
                 sh '''
-                    export NVM_DIR="$HOME/.nvm"
-                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                    nvm install 18
-                    nvm use 18
                     node -v
                     npm -v
                 '''
@@ -42,18 +38,20 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t $IMAGE_NAME:$IMAGE_TAG ."
+                script {
+                    docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
+                }
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS,
-                                                 passwordVariable: 'DOCKER_PASS',
-                                                 usernameVariable: 'DOCKER_USER')]) {
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", 
+                                  passwordVariable: 'DOCKER_PASS', 
+                                  usernameVariable: 'DOCKER_USER')]) {
                     sh """
                         echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                        docker push $IMAGE_NAME:$IMAGE_TAG
+                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
                     """
                 }
             }
