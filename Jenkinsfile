@@ -1,69 +1,75 @@
 pipeline {
     agent any
 
+    environment {
+        // DockerHub credentials ID in Jenkins
+        DOCKER_CREDENTIALS = 'dockerhub-creds'
+        IMAGE_NAME = 'kalyani46/node-k8s-app'
+        IMAGE_TAG = 'latest'
+    }
+
     stages {
-        // --- NEW STAGE: Check Node & NPM ---
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Kalyani1213/node-k8s-app.git'
+            }
+        }
+
         stage('Check Node & NPM') {
             steps {
                 sh '''
                     export NVM_DIR="$HOME/.nvm"
-                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                    nvm use 18 || nvm install 18
                     node -v
                     npm -v
                 '''
             }
         }
 
-        stage('Checkout') {
-            steps {
-                git branch: 'main', url: 'https://github.com/Kalyani1213/node-k8s-app.git'
-            }
-        }
-
         stage('Install Dependencies') {
             steps {
-                sh '''
-                    export NVM_DIR="$HOME/.nvm"
-                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-                    npm install
-                '''
+                sh 'npm install'
             }
         }
 
-        stage('Test') {
+        stage('Run Tests') {
             steps {
-                sh '''
-                    export NVM_DIR="$HOME/.nvm"
-                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-                    npm test
-                '''
+                sh 'npm test'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t my-node-app:latest .'
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                sh 'docker login -u <your-docker-username> -p <your-docker-password>'
-                sh 'docker tag my-node-app:latest <your-docker-username>/my-node-app:latest'
-                sh 'docker push <your-docker-username>/my-node-app:latest'
+                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                    sh """
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                        docker logout
+                    """
+                }
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh 'kubectl apply -f k8s-deployment.yaml'
+                sh 'kubectl apply -f k8s/'
             }
         }
     }
 
     post {
-        always {
-            echo 'Pipeline finished!'
+        success {
+            echo "Pipeline completed successfully!"
+        }
+        failure {
+            echo "Pipeline failed. Check the logs above."
         }
     }
 }
