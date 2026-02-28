@@ -11,7 +11,7 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/Kalyani1213/node-k8s-app.git'
+                git branch: 'main', url: 'https://github.com/Kalyani1213/node-k8s-app/'
             }
         }
 
@@ -20,7 +20,8 @@ pipeline {
                 sh '''
                     export NVM_DIR="$HOME/.nvm"
                     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                    nvm use 18 || nvm install 18
+                    nvm install 18
+                    nvm use 18
                     node -v
                     npm -v
                 '''
@@ -41,17 +42,18 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                sh "docker build -t $IMAGE_NAME:$IMAGE_TAG ."
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS}", passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                withCredentials([usernamePassword(credentialsId: DOCKER_CREDENTIALS,
+                                                 passwordVariable: 'DOCKER_PASS',
+                                                 usernameVariable: 'DOCKER_USER')]) {
                     sh """
                         echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                        docker logout
+                        docker push $IMAGE_NAME:$IMAGE_TAG
                     """
                 }
             }
@@ -61,15 +63,6 @@ pipeline {
             steps {
                 sh 'kubectl apply -f k8s/'
             }
-        }
-    }
-
-    post {
-        success {
-            echo "Pipeline completed successfully!"
-        }
-        failure {
-            echo "Pipeline failed. Check the logs above."
         }
     }
 }
