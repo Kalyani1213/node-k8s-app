@@ -1,11 +1,19 @@
 pipeline {
     agent any
 
-    environment {
-        PATH = "/usr/bin:$PATH"   // ensure Node 18 is in PATH
-    }
-
     stages {
+        // --- NEW STAGE: Check Node & NPM ---
+        stage('Check Node & NPM') {
+            steps {
+                sh '''
+                    export NVM_DIR="$HOME/.nvm"
+                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+                    node -v
+                    npm -v
+                '''
+            }
+        }
+
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/Kalyani1213/node-k8s-app.git'
@@ -14,15 +22,21 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'node -v'   // should show v18.x
-                sh 'npm -v'    // should show v10.x
-                sh 'npm install'
+                sh '''
+                    export NVM_DIR="$HOME/.nvm"
+                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+                    npm install
+                '''
             }
         }
 
         stage('Test') {
             steps {
-                sh 'npm test'
+                sh '''
+                    export NVM_DIR="$HOME/.nvm"
+                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+                    npm test
+                '''
             }
         }
 
@@ -34,11 +48,9 @@ pipeline {
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh 'echo $PASS | docker login -u $USER --password-stdin'
-                    sh 'docker tag my-node-app:latest yourdockerhubusername/my-node-app:latest'
-                    sh 'docker push yourdockerhubusername/my-node-app:latest'
-                }
+                sh 'docker login -u <your-docker-username> -p <your-docker-password>'
+                sh 'docker tag my-node-app:latest <your-docker-username>/my-node-app:latest'
+                sh 'docker push <your-docker-username>/my-node-app:latest'
             }
         }
 
