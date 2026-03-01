@@ -13,25 +13,21 @@ pipeline {
         stage('Setup Node & NPM') {
             steps {
                 sh '''
-                /home/user/.nvm/versions/node/v22.16.0/bin/node -v
-                /home/user/.nvm/versions/node/v22.16.0/bin/npm -v
+                node -v
+                npm -v
                 '''
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh '''
-                /home/user/.nvm/versions/node/v22.16.0/bin/npm install
-                '''
+                sh 'npm install'
             }
         }
 
         stage('Run Tests') {
             steps {
-                sh '''
-                /home/user/.nvm/versions/node/v22.16.0/bin/npm test
-                '''
+                sh 'npm test'
             }
         }
 
