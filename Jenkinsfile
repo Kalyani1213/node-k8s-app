@@ -14,11 +14,13 @@ pipeline {
             }
         }
 
-        stage('Use Node from NVM') {
+        stage('Setup Node') {
             steps {
+                // Use bash explicitly and source nvm
                 sh '''
+                #!/bin/bash
                 export NVM_DIR="$NVM_DIR"
-                [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+                [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
                 nvm use 22
                 node -v
                 npm -v
@@ -29,8 +31,9 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
+                #!/bin/bash
                 export NVM_DIR="$NVM_DIR"
-                [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+                [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
                 nvm use 22
                 npm install
                 '''
@@ -40,8 +43,9 @@ pipeline {
         stage('Run Tests') {
             steps {
                 sh '''
+                #!/bin/bash
                 export NVM_DIR="$NVM_DIR"
-                [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+                [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
                 nvm use 22
                 npm test
                 '''
