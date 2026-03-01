@@ -9,7 +9,8 @@ pipeline {
 
         stage('Checkout Code') {
             steps {
-                git 'https://github.com/Kalyani1213/node-k8s-app'
+                deleteDir()  // wipes workspace at the start of this stage
+                git branch: 'main', url: 'https://github.com/Kalyani1213/node-k8s-app'
             }
         }
 
