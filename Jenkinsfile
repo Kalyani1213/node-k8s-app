@@ -38,7 +38,8 @@ pipeline {
 
         stage('Verify Deployment') {
             steps {
-                sh "curl $(minikube service my-k8s-app-service -n $K8S_NAMESPACE --url)"
+                // Corrected: escape the $ to prevent Groovy error
+                sh "curl \$(minikube service my-k8s-app-service -n ${K8S_NAMESPACE} --url)"
             }
         }
     }
