@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        NVM_DIR = "/home/user/.nvm"
-    }
-
     stages {
 
         stage('Checkout Code') {
@@ -14,16 +10,11 @@ pipeline {
             }
         }
 
-        stage('Setup Node') {
+        stage('Setup Node & NPM') {
             steps {
-                // Use bash explicitly and source nvm
                 sh '''
-                #!/bin/bash
-                export NVM_DIR="$NVM_DIR"
-                [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
-                nvm use 22
-                node -v
-                npm -v
+                /home/user/.nvm/versions/node/v22.16.0/bin/node -v
+                /home/user/.nvm/versions/node/v22.16.0/bin/npm -v
                 '''
             }
         }
@@ -31,11 +22,7 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
-                #!/bin/bash
-                export NVM_DIR="$NVM_DIR"
-                [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
-                nvm use 22
-                npm install
+                /home/user/.nvm/versions/node/v22.16.0/bin/npm install
                 '''
             }
         }
@@ -43,11 +30,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 sh '''
-                #!/bin/bash
-                export NVM_DIR="$NVM_DIR"
-                [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
-                nvm use 22
-                npm test
+                /home/user/.nvm/versions/node/v22.16.0/bin/npm test
                 '''
             }
         }
