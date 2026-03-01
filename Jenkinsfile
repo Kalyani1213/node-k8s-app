@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "<docker-username>/node-k8s-app:latest"  // Replace with your Docker Hub username
+        DOCKER_IMAGE = "Kalyani/node-k8s-app:latest"  // Replace with your Docker Hub username
         K8S_NAMESPACE = "test-pipeline"
     }
 
@@ -11,7 +11,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Get code from GitHub
-                git branch: 'main', url: 'https://github.com/<your-repo>.git' // Replace with your repo
+                git branch: 'main', url: 'https://github.com/Kalyani1213/node-k8s-app.git'
             }
         }
 
@@ -23,7 +23,11 @@ pipeline {
 
         stage('Push Docker Image') {
             steps {
-                sh 'docker push $DOCKER_IMAGE'
+                // Login to Docker Hub (ensure you have credentials added in Jenkins)
+                withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh "docker push $DOCKER_IMAGE"
+                }
             }
         }
 
@@ -31,24 +35,13 @@ pipeline {
             steps {
                 // Apply deployment and service YAMLs
                 sh "kubectl apply -f k8s-deployment.yaml -n $K8S_NAMESPACE"
-                
-                // Delete old service to avoid NodePort conflicts
-                sh "kubectl delete svc my-k8s-app-service -n $K8S_NAMESPACE 2>/dev/null || true"
-
                 sh "kubectl apply -f k8s-service.yaml -n $K8S_NAMESPACE"
             }
         }
 
         stage('Verify Deployment') {
             steps {
-                // Wait for pods to be running
-                sh "kubectl get pods -n $K8S_NAMESPACE"
-
-                // Check logs of the first pod
-                sh "kubectl logs \$(kubectl get pods -n $K8S_NAMESPACE -o jsonpath='{.items[0].metadata.name}') -n $K8S_NAMESPACE"
-
-                // Test the app response
-                sh "curl \$(minikube service my-k8s-app-service -n $K8S_NAMESPACE --url)"
+                sh 'curl $(minikube service my-k8s-app-service -n $K8S_NAMESPACE --url)'
             }
         }
     }
