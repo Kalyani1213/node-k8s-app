@@ -25,7 +25,11 @@ pipeline {
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(
+                    credentialsId: 'docker-hub', 
+                    usernameVariable: 'DOCKER_USER', 
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
                     sh '''
                        set -e
                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
@@ -39,15 +43,17 @@ pipeline {
             steps {
                 sh '''
                    set -e
-                   kubectl apply -f k8s/k8s-deployment.yaml -n $K8S_NAMESPACE
-                   kubectl apply -f k8s/k8s-service.yaml -n $K8S_NAMESPACE
+                   # Correct paths to match your repo structure
+                   kubectl apply -f k8s-deployment.yaml -n $K8S_NAMESPACE
+                   kubectl apply -f k8s-service.yaml -n $K8S_NAMESPACE
                 '''
             }
         }
 
         stage('Verify Deployment') {
             steps {
-                sh 'curl $(minikube service my-k8s-app-service -n ' + K8S_NAMESPACE + ' --url)'
+                // Properly escape $() so Groovy evaluates it in the shell
+                sh "curl \$(minikube service my-k8s-app-service -n ${K8S_NAMESPACE} --url)"
             }
         }
     }
